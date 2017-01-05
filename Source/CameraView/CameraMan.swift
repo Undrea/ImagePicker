@@ -31,7 +31,7 @@ class CameraMan {
 
   func setup(startOnFrontCamera: Bool = false, shouldShowPermissionAlerts: Bool = true) {
     self.startOnFrontCamera = startOnFrontCamera
-    `
+    
     if shouldShowPermissionAlerts {
       checkPermission() // Will start the camera if authorized or notify the delegate if denied
     } else if isCameraAuthorized {
