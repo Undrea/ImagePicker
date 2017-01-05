@@ -47,6 +47,7 @@ open class ImagePickerController: UIViewController {
     let controller = CameraView()
     controller.delegate = self
     controller.startOnFrontCamera = self.startOnFrontCamera
+    controller.shouldShowPermissionAlerts = self.shouldShowPermissionAlerts
 
     return controller
     }()
@@ -72,6 +73,7 @@ open class ImagePickerController: UIViewController {
   open var imageLimit = 0
   open var preferredImageSize: CGSize?
   open var startOnFrontCamera = false
+  open var shouldShowPermissionAlerts = true
   var totalSize: CGSize { return UIScreen.main.bounds.size }
   var initialFrame: CGRect?
   var initialContentOffset: CGPoint?
@@ -132,7 +134,10 @@ open class ImagePickerController: UIViewController {
                                width: totalSize.width,
                                height: galleryHeight)
     galleryView.updateFrames()
-    checkStatus()
+    
+    if shouldShowPermissionAlerts {
+      checkStatus()
+    }
 
     initialFrame = galleryView.frame
     initialContentOffset = galleryView.collectionView.contentOffset

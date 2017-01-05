@@ -19,15 +19,26 @@ class CameraMan {
   var stillImageOutput: AVCaptureStillImageOutput?
   var startOnFrontCamera: Bool = false
 
+  var isCameraAuthorized: Bool {
+    return AVCaptureDevice.authorizationStatus(forMediaType: AVMediaTypeVideo) == .authorized
+  }
+  
   deinit {
     stop()
   }
 
   // MARK: - Setup
 
-  func setup(_ startOnFrontCamera: Bool = false) {
+  func setup(startOnFrontCamera: Bool = false, shouldShowPermissionAlerts: Bool = true) {
     self.startOnFrontCamera = startOnFrontCamera
-    checkPermission()
+    `
+    if shouldShowPermissionAlerts {
+      checkPermission() // Will start the camera if authorized or notify the delegate if denied
+    } else if isCameraAuthorized {
+      start()
+    } else {
+      delegate?.cameraManNotAvailable(self)
+    }
   }
 
   func setupDevices() {

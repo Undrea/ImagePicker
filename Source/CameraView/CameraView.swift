@@ -86,6 +86,7 @@ class CameraView: UIViewController, CLLocationManagerDelegate, CameraManDelegate
   var animationTimer: Timer?
   var locationManager: LocationManager?
   var startOnFrontCamera: Bool = false
+  var shouldShowPermissionAlerts: Bool = true
 
   override func viewDidLoad() {
     super.viewDidLoad()
@@ -106,7 +107,7 @@ class CameraView: UIViewController, CLLocationManagerDelegate, CameraManDelegate
     view.addGestureRecognizer(tapGestureRecognizer)
 
     cameraMan.delegate = self
-    cameraMan.setup(self.startOnFrontCamera)
+    cameraMan.setup(startOnFrontCamera: startOnFrontCamera, shouldShowPermissionAlerts: shouldShowPermissionAlerts)
   }
 
   override func viewDidAppear(_ animated: Bool) {
