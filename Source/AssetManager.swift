@@ -1,25 +1,7 @@
 import Foundation
 import UIKit
 import Photos
-fileprivate func < <T: Comparable>(lhs: T?, rhs: T?) -> Bool {
-  switch (lhs, rhs) {
-  case let (l?, r?):
-    return l < r
-  case (nil, _?):
-    return true
-  default:
-    return false
-  }
-}
 
-fileprivate func > <T: Comparable>(lhs: T?, rhs: T?) -> Bool {
-  switch (lhs, rhs) {
-  case let (l?, r?):
-    return l > r
-  default:
-    return rhs < lhs
-  }
-}
 open class AssetManager {
 
   open static func getImage(_ name: String) -> UIImage {
@@ -33,26 +15,24 @@ open class AssetManager {
     return UIImage(named: name, in: bundle, compatibleWith: traitCollection) ?? UIImage()
   }
 
-  open static func fetch(_ completion: @escaping (_ assets: [PHAsset]) -> Void) {
-    let fetchOptions = PHFetchOptions()
-    let authorizationStatus = PHPhotoLibrary.authorizationStatus()
-    var fetchResult: PHFetchResult<PHAsset>?
+  open static func fetch(withConfiguration configuration: Configuration, _ completion: @escaping (_ assets: [PHAsset]) -> Void) {
+    guard PHPhotoLibrary.authorizationStatus() == .authorized else { return }
 
-    guard authorizationStatus == .authorized else { return }
+    DispatchQueue.global(qos: .background).async {
+      let fetchResult = configuration.allowVideoSelection
+        ? PHAsset.fetchAssets(with: PHFetchOptions())
+        : PHAsset.fetchAssets(with: .image, options: PHFetchOptions())
+        
+      if fetchResult.count > 0 {
+        var assets = [PHAsset]()
+        fetchResult.enumerateObjects({ object, index, stop in
+          assets.insert(object, at: 0)
+        })
 
-    if fetchResult == nil {
-      fetchResult = PHAsset.fetchAssets(with: .image, options: fetchOptions)
-    }
-
-    if fetchResult?.count > 0 {
-      var assets = [PHAsset]()
-      fetchResult?.enumerateObjects({ object, index, stop in
-        assets.insert(object, at: 0)
-      })
-
-      DispatchQueue.main.async(execute: {
-        completion(assets)
-      })
+        DispatchQueue.main.async {
+          completion(assets)
+        }
+      }
     }
   }
 
@@ -60,6 +40,7 @@ open class AssetManager {
     let imageManager = PHImageManager.default()
     let requestOptions = PHImageRequestOptions()
     requestOptions.deliveryMode = .highQualityFormat
+    requestOptions.isNetworkAccessAllowed = true
 
     imageManager.requestImage(for: asset, targetSize: size, contentMode: .aspectFill, options: requestOptions) { image, info in
       if let info = info, info["PHImageFileUTIKey"] == nil {
