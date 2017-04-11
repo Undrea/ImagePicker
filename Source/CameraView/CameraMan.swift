@@ -192,7 +192,7 @@ class CameraMan {
         }
         
         // Now save this image to the Camera Roll
-        self.savePhoto(withData: imageData, location: location)
+        self.savePhoto(withData: imageData, location: location, completion: completion)
       }
     }
   }
