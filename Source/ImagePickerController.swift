@@ -3,9 +3,9 @@ import MediaPlayer
 import Photos
 
 @objc public protocol ImagePickerDelegate: class {
-
-  func wrapperDidPress(_ imagePicker: ImagePickerController, images: [UIImage])
-  func doneButtonDidPress(_ imagePicker: ImagePickerController, images: [UIImage])
+  
+  func wrapperDidPress(_ imagePicker: ImagePickerController, imageDataArray: [Data])
+  func doneButtonDidPress(_ imagePicker: ImagePickerController, imageDataArray: [Data])
   func cancelButtonDidPress(_ imagePicker: ImagePickerController)
 }
 
@@ -225,29 +225,29 @@ open class ImagePickerController: UIViewController {
 
   func subscribe() {
     NotificationCenter.default.addObserver(self,
-      selector: #selector(adjustButtonTitle(_:)),
-      name: NSNotification.Name(rawValue: ImageStack.Notifications.imageDidPush),
-      object: nil)
-
+                                           selector: #selector(adjustButtonTitle(_:)),
+                                           name: NSNotification.Name(rawValue: ImageStack.Notifications.imageDidPush),
+                                           object: nil)
+    
     NotificationCenter.default.addObserver(self,
-      selector: #selector(adjustButtonTitle(_:)),
-      name: NSNotification.Name(rawValue: ImageStack.Notifications.imageDidDrop),
-      object: nil)
-
+                                           selector: #selector(adjustButtonTitle(_:)),
+                                           name: NSNotification.Name(rawValue: ImageStack.Notifications.imageDidDrop),
+                                           object: nil)
+    
     NotificationCenter.default.addObserver(self,
-      selector: #selector(didReloadAssets(_:)),
-      name: NSNotification.Name(rawValue: ImageStack.Notifications.stackDidReload),
-      object: nil)
-
+                                           selector: #selector(didReloadAssets(_:)),
+                                           name: NSNotification.Name(rawValue: ImageStack.Notifications.stackDidReload),
+                                           object: nil)
+    
     NotificationCenter.default.addObserver(self,
-      selector: #selector(volumeChanged(_:)),
-      name: NSNotification.Name(rawValue: "AVSystemController_SystemVolumeDidChangeNotification"),
-      object: nil)
-
+                                           selector: #selector(volumeChanged(_:)),
+                                           name: NSNotification.Name(rawValue: "AVSystemController_SystemVolumeDidChangeNotification"),
+                                           object: nil)
+    
     NotificationCenter.default.addObserver(self,
-      selector: #selector(handleRotation(_:)),
-      name: NSNotification.Name.UIDeviceOrientationDidChange,
-      object: nil)
+                                           selector: #selector(handleRotation(_:)),
+                                           name: NSNotification.Name.UIDeviceOrientationDidChange,
+                                           object: nil)
   }
 
   func didReloadAssets(_ notification: Notification) {
@@ -285,8 +285,8 @@ open class ImagePickerController: UIViewController {
       self.updateGalleryViewFrames(self.galleryView.topSeparator.frame.height)
       self.galleryView.collectionView.transform = CGAffineTransform.identity
       self.galleryView.collectionView.contentInset = UIEdgeInsets.zero
-      }, completion: { _ in
-        completion?()
+    }, completion: { _ in
+      completion?()
     })
   }
 
@@ -356,14 +356,15 @@ extension ImagePickerController: BottomContainerViewDelegate {
   }
 
   func doneButtonDidPress() {
-    var images: [UIImage]
     if let preferredImageSize = preferredImageSize {
-      images = AssetManager.resolveAssets(stack.assets, size: preferredImageSize)
+      AssetManager.resolveAssets(stack.assets, size: preferredImageSize, completion: { [weak self] imageDataArr in
+        self?.delegate?.doneButtonDidPress(self!, imageDataArray: imageDataArr)
+      })
     } else {
-      images = AssetManager.resolveAssets(stack.assets)
+      AssetManager.resolveAssets(stack.assets, completion: { [weak self] imageDataArr in
+        self?.delegate?.doneButtonDidPress(self!, imageDataArray: imageDataArr)
+      })
     }
-
-    delegate?.doneButtonDidPress(self, images: images)
   }
 
   func cancelButtonDidPress() {
@@ -372,14 +373,15 @@ extension ImagePickerController: BottomContainerViewDelegate {
   }
 
   func imageStackViewDidPress() {
-    var images: [UIImage]
     if let preferredImageSize = preferredImageSize {
-        images = AssetManager.resolveAssets(stack.assets, size: preferredImageSize)
+      AssetManager.resolveAssets(stack.assets, size: preferredImageSize, completion: { [weak self] imageDataArr in
+        self?.delegate?.wrapperDidPress(self!, imageDataArray: imageDataArr)
+      })
     } else {
-        images = AssetManager.resolveAssets(stack.assets)
+      AssetManager.resolveAssets(stack.assets, completion: { [weak self] imageDataArr in
+        self?.delegate?.wrapperDidPress(self!, imageDataArray: imageDataArr)
+      })
     }
-
-    delegate?.wrapperDidPress(self, images: images)
   }
 }
 
@@ -405,8 +407,8 @@ extension ImagePickerController: CameraViewDelegate {
 
     UIView.animate(withDuration: 0.3, animations: {
       self.galleryView.collectionView.transform = CGAffineTransform(translationX: collectionSize.width, y: 0)
-      }, completion: { _ in
-        self.galleryView.collectionView.transform = CGAffineTransform.identity
+    }, completion: { _ in
+      self.galleryView.collectionView.transform = CGAffineTransform.identity
     })
   }
 
@@ -427,7 +429,7 @@ extension ImagePickerController: CameraViewDelegate {
 
     UIView.animate(withDuration: 0.25, animations: {
       [self.topView.rotateCamera, self.bottomContainer.pickerButton,
-        self.bottomContainer.stackView, self.bottomContainer.doneButton].forEach {
+       self.bottomContainer.stackView, self.bottomContainer.doneButton].forEach {
         $0.transform = rotate
       }
 

@@ -51,19 +51,26 @@ open class AssetManager {
     }
   }
 
-  open static func resolveAssets(_ assets: [PHAsset], size: CGSize = CGSize(width: 720, height: 1280)) -> [UIImage] {
+  open static func resolveAssets(_ assets: [PHAsset], size: CGSize = CGSize(width: 720, height: 1280), completion: @escaping ([Data])->()) {
     let imageManager = PHImageManager.default()
     let requestOptions = PHImageRequestOptions()
-    requestOptions.isSynchronous = true
-
-    var images = [UIImage]()
+    
+    let group = DispatchGroup()
+    var imageDataArr: [Data] = []
+    
     for asset in assets {
-      imageManager.requestImage(for: asset, targetSize: size, contentMode: .aspectFill, options: requestOptions) { image, info in
-        if let image = image {
-          images.append(image)
+      group.enter()
+      imageManager.requestImageData(for: asset, options: requestOptions, resultHandler: { (imageData, dataUTI, orientation, infoDict) in
+        if let imageData = imageData {
+          imageDataArr.append(imageData)
         }
-      }
+        group.leave()
+      })
     }
-    return images
+    
+    group.notify(queue: .main) {
+      // All the imageData elements have been 'downloaded'
+      completion(imageDataArr)
+    }
   }
 }
