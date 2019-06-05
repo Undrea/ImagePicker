@@ -511,7 +511,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = no.hyper.ImagePicker;
 				PRODUCT_NAME = ImagePicker;
 				SKIP_INSTALL = YES;
-				SWIFT_VERSION = 3.0;
+				SWIFT_VERSION = 4.2;
 			};
 			name = Debug;
 		};
@@ -531,7 +531,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = no.hyper.ImagePicker;
 				PRODUCT_NAME = ImagePicker;
 				SKIP_INSTALL = YES;
-				SWIFT_VERSION = 3.0;
+				SWIFT_VERSION = 4.2;
 			};
 			name = Release;
 		};

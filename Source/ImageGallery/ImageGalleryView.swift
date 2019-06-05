@@ -2,8 +2,8 @@ import UIKit
 import Photos
 fileprivate func < <T: Comparable>(lhs: T?, rhs: T?) -> Bool {
   switch (lhs, rhs) {
-  case let (l?, r?):
-    return l < r
+  case let (left?, right?):
+    return left < right
   case (nil, _?):
     return true
   default:
@@ -170,7 +170,7 @@ open class ImageGalleryView: UIView {
 
   // MARK: - Pan gesture recognizer
 
-  func handlePanGestureRecognizer(_ gesture: UIPanGestureRecognizer) {
+  @objc func handlePanGestureRecognizer(_ gesture: UIPanGestureRecognizer) {
     guard let superview = superview else { return }
 
     let translation = gesture.translation(in: superview)
@@ -246,7 +246,7 @@ extension ImageGalleryView: UICollectionViewDelegate {
       } else if self.imageLimit == 0 || self.imageLimit > self.selectedStack.assets.count {
         cell.selectedImageView.image = AssetManager.getImage("selectedImageGallery")
         cell.selectedImageView.transform = CGAffineTransform(scaleX: 0, y: 0)
-        UIView.animate(withDuration: 0.2, animations: { _ in
+        UIView.animate(withDuration: 0.2, animations: {
           cell.selectedImageView.transform = CGAffineTransform.identity
         })
         self.selectedStack.pushAsset(asset)

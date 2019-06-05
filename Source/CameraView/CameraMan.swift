@@ -20,7 +20,7 @@ class CameraMan {
   var startOnFrontCamera: Bool = false
 
   var isCameraAuthorized: Bool {
-    return AVCaptureDevice.authorizationStatus(forMediaType: AVMediaTypeVideo) == .authorized
+    return AVCaptureDevice.authorizationStatus(for: AVMediaType.video) == .authorized
   }
   
   deinit {
@@ -47,7 +47,7 @@ class CameraMan {
     .devices().flatMap {
       return $0 as? AVCaptureDevice
     }.filter {
-      return $0.hasMediaType(AVMediaTypeVideo)
+      return $0.hasMediaType(AVMediaType.video)
     }.forEach {
       switch $0.position {
       case .front:
@@ -79,7 +79,7 @@ class CameraMan {
   // MARK: - Permission
 
   func checkPermission() {
-    let status = AVCaptureDevice.authorizationStatus(forMediaType: AVMediaTypeVideo)
+    let status = AVCaptureDevice.authorizationStatus(for: AVMediaType.video)
 
     switch status {
     case .authorized:
@@ -92,7 +92,7 @@ class CameraMan {
   }
 
   func requestPermission() {
-    AVCaptureDevice.requestAccess(forMediaType: AVMediaTypeVideo) { granted in
+    AVCaptureDevice.requestAccess(for: AVMediaType.video) { granted in
       DispatchQueue.main.async {
         if granted {
           self.start()
@@ -162,7 +162,7 @@ class CameraMan {
   }
 
   func takePhoto(_ previewLayer: AVCaptureVideoPreviewLayer, location: CLLocation?, completion: (() -> Void)? = nil) {
-    guard let connection = stillImageOutput?.connection(withMediaType: AVMediaTypeVideo) else { return }
+    guard let connection = stillImageOutput?.connection(with: AVMediaType.video) else { return }
     
     connection.videoOrientation = Helper.videoOrientation()
     
@@ -178,10 +178,10 @@ class CameraMan {
         // If we have a location, append the metadata to the buffer 
         // This avoids making a copy of the buffer image and duplicating, as with using source/destination. (i.e. CGImageSourceCreateWithData)
         if let location = location {
-          var metaDict = CMCopyDictionaryOfAttachments(nil, buffer, kCMAttachmentMode_ShouldPropagate) as? Dictionary<String, Any> ?? [:]
+          var metaDict = CMCopyDictionaryOfAttachments(allocator: nil, target: buffer, attachmentMode: kCMAttachmentMode_ShouldPropagate) as? Dictionary<String, Any> ?? [:]
           metaDict[kCGImagePropertyGPSDictionary as String] = location.gpsMetadata()
           
-          CMSetAttachments(buffer, metaDict as CFDictionary, kCMAttachmentMode_ShouldPropagate)
+          CMSetAttachments(buffer, attachments: metaDict as CFDictionary, attachmentMode: kCMAttachmentMode_ShouldPropagate)
         }
         
         guard let imageData = AVCaptureStillImageOutput.jpegStillImageNSDataRepresentation(buffer) else {
@@ -192,12 +192,12 @@ class CameraMan {
         }
         
         // Now save this image to the Camera Roll
-        self.savePhoto(withData: imageData, location: location, completion: completion)
+        self.savePhoto(withData: imageData, completion: completion)
       }
     }
   }
   
-  func savePhoto(withData data: Data, location: CLLocation?, completion: (() -> Void)? = nil) {
+  func savePhoto(withData data: Data, completion: (() -> Void)? = nil) {
     // Note that using the Photos API .location property on a request does NOT embed GPS metadata into the data for a file.
     PHPhotoLibrary.shared().performChanges({
       if #available(iOS 9.0, *) {
@@ -217,14 +217,15 @@ class CameraMan {
           // Error writing the data; photo is not appended to the camera roll
         }
       }
-    }, completionHandler: { _ in
+    }, completionHandler: { (isSuccess, error) in
+      // FIXME Handle error case for Swift 4.2
       DispatchQueue.main.async {
         completion?()
       }
     })
   }
 
-  func flash(_ mode: AVCaptureFlashMode) {
+  func flash(_ mode: AVCaptureDevice.FlashMode) {
     guard let device = currentInput?.device, device.isFlashModeSupported(mode) else { return }
 
     queue.async {
@@ -235,7 +236,7 @@ class CameraMan {
   }
 
   func focus(_ point: CGPoint) {
-    guard let device = currentInput?.device, device.isFocusModeSupported(AVCaptureFocusMode.locked) else { return }
+    guard let device = currentInput?.device, device.isFocusModeSupported(AVCaptureDevice.FocusMode.locked) else { return }
 
     queue.async {
       self.lock {
@@ -264,18 +265,18 @@ class CameraMan {
 
   func configurePreset(_ input: AVCaptureDeviceInput) {
     for asset in preferredPresets() {
-      if input.device.supportsAVCaptureSessionPreset(asset) && self.session.canSetSessionPreset(asset) {
+      if input.device.supportsSessionPreset(asset) && self.session.canSetSessionPreset(asset) {
         self.session.sessionPreset = asset
         return
       }
     }
   }
 
-  func preferredPresets() -> [String] {
+  func preferredPresets() -> [AVCaptureSession.Preset] {
     return [
-      AVCaptureSessionPresetHigh,
-      AVCaptureSessionPresetMedium,
-      AVCaptureSessionPresetLow
+      AVCaptureSession.Preset.high,
+      AVCaptureSession.Preset.medium,
+      AVCaptureSession.Preset.low
     ]
   }
 }
