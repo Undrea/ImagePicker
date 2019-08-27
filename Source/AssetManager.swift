@@ -4,7 +4,7 @@ import Photos
 
 open class AssetManager {
 
-  open static func getImage(_ name: String) -> UIImage {
+  public static func getImage(_ name: String) -> UIImage {
     let traitCollection = UITraitCollection(displayScale: 3)
     var bundle = Bundle(for: AssetManager.self)
 
@@ -15,14 +15,14 @@ open class AssetManager {
     return UIImage(named: name, in: bundle, compatibleWith: traitCollection) ?? UIImage()
   }
 
-  open static func fetch(withConfiguration configuration: Configuration, _ completion: @escaping (_ assets: [PHAsset]) -> Void) {
+  public static func fetch(withConfiguration configuration: Configuration, _ completion: @escaping (_ assets: [PHAsset]) -> Void) {
     guard PHPhotoLibrary.authorizationStatus() == .authorized else { return }
 
     DispatchQueue.global(qos: .background).async {
       let fetchResult = configuration.allowVideoSelection
         ? PHAsset.fetchAssets(with: PHFetchOptions())
         : PHAsset.fetchAssets(with: .image, options: PHFetchOptions())
-        
+
       if fetchResult.count > 0 {
         var assets = [PHAsset]()
         fetchResult.enumerateObjects({ object, index, stop in
@@ -36,7 +36,7 @@ open class AssetManager {
     }
   }
 
-  open static func resolveAsset(_ asset: PHAsset, size: CGSize = CGSize(width: 720, height: 1280), completion: @escaping (_ image: UIImage?) -> Void) {
+  public static func resolveAsset(_ asset: PHAsset, size: CGSize = CGSize(width: 720, height: 1280), completion: @escaping (_ image: UIImage?) -> Void) {
     let imageManager = PHImageManager.default()
     let requestOptions = PHImageRequestOptions()
     requestOptions.deliveryMode = .highQualityFormat
@@ -51,13 +51,13 @@ open class AssetManager {
     }
   }
 
-  open static func resolveAssets(_ assets: [PHAsset], size: CGSize = CGSize(width: 720, height: 1280), completion: @escaping ([Data])->()) {
+  public static func resolveAssets(_ assets: [PHAsset], size: CGSize = CGSize(width: 720, height: 1280), completion: @escaping ([Data]) -> Void) {
     let imageManager = PHImageManager.default()
     let requestOptions = PHImageRequestOptions()
-    
+
     let group = DispatchGroup()
     var imageDataArr: [Data] = []
-    
+
     for asset in assets {
       group.enter()
       imageManager.requestImageData(for: asset, options: requestOptions, resultHandler: { (imageData, dataUTI, orientation, infoDict) in
@@ -67,7 +67,7 @@ open class AssetManager {
         group.leave()
       })
     }
-    
+
     group.notify(queue: .main) {
       // All the imageData elements have been 'downloaded'
       completion(imageDataArr)

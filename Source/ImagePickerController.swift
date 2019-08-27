@@ -3,7 +3,6 @@ import MediaPlayer
 import Photos
 
 @objc public protocol ImagePickerDelegate: class {
-  
   func wrapperDidPress(_ imagePicker: ImagePickerController, imageDataArray: [Data])
   func doneButtonDidPress(_ imagePicker: ImagePickerController, imageDataArray: [Data])
   func cancelButtonDidPress(_ imagePicker: ImagePickerController)
@@ -99,11 +98,11 @@ open class ImagePickerController: UIViewController {
     }
     super.init(nibName: nil, bundle: nil)
   }
-  
+
   public override init(nibName nibNameOrNil: String?, bundle nibBundleOrNil: Bundle?) {
     super.init(nibName: nibNameOrNil, bundle: nibBundleOrNil)
   }
-  
+
   required public init?(coder aDecoder: NSCoder) {
     super.init(coder: aDecoder)
   }
@@ -153,7 +152,7 @@ open class ImagePickerController: UIViewController {
                                width: totalSize.width,
                                height: galleryHeight)
     galleryView.updateFrames()
-    
+
     if shouldShowPermissionAlerts {
       checkStatus()
     }
@@ -228,22 +227,22 @@ open class ImagePickerController: UIViewController {
                                            selector: #selector(adjustButtonTitle(_:)),
                                            name: NSNotification.Name(rawValue: ImageStack.Notifications.imageDidPush),
                                            object: nil)
-    
+
     NotificationCenter.default.addObserver(self,
                                            selector: #selector(adjustButtonTitle(_:)),
                                            name: NSNotification.Name(rawValue: ImageStack.Notifications.imageDidDrop),
                                            object: nil)
-    
+
     NotificationCenter.default.addObserver(self,
                                            selector: #selector(didReloadAssets(_:)),
                                            name: NSNotification.Name(rawValue: ImageStack.Notifications.stackDidReload),
                                            object: nil)
-    
+
     NotificationCenter.default.addObserver(self,
                                            selector: #selector(volumeChanged(_:)),
                                            name: NSNotification.Name(rawValue: "AVSystemController_SystemVolumeDidChangeNotification"),
                                            object: nil)
-    
+
     NotificationCenter.default.addObserver(self,
                                            selector: #selector(handleRotation(_:)),
                                            name: UIDevice.orientationDidChangeNotification,
@@ -309,7 +308,7 @@ open class ImagePickerController: UIViewController {
       self.galleryView.collectionView.transform = CGAffineTransform(scaleX: scale, y: scale)
 
       let value = self.view.frame.width * (scale - 1) / scale
-      self.galleryView.collectionView.contentInset = UIEdgeInsets(top: 0, left: 0, bottom: 0, right:  value)
+      self.galleryView.collectionView.contentInset = UIEdgeInsets(top: 0, left: 0, bottom: 0, right: value)
     })
   }
 
@@ -394,14 +393,14 @@ extension ImagePickerController: CameraViewDelegate {
   func imageToLibrary() {
     guard let collectionSize = galleryView.collectionSize else { return }
 
-    galleryView.fetchPhotos() {
+    galleryView.fetchPhotos {
       guard let asset = self.galleryView.assets.first else { return }
       if self.configuration.allowMultiplePhotoSelection == false {
         self.stack.assets.removeAll()
       }
       self.stack.pushAsset(asset)
     }
-    
+
     galleryView.shouldTransform = true
     bottomContainer.pickerButton.isEnabled = true
 
@@ -502,7 +501,7 @@ extension ImagePickerController: ImageGalleryPanGestureDelegate {
       galleryView.frame.size.height = initialFrame.height - translation.y
 
       let value = view.frame.width * (scale - 1) / scale
-      galleryView.collectionView.contentInset = UIEdgeInsets(top: 0, left: 0, bottom: 0, right:  value)
+      galleryView.collectionView.contentInset = UIEdgeInsets(top: 0, left: 0, bottom: 0, right: value)
     } else {
       galleryView.frame.origin.y = initialFrame.origin.y + translation.y
       galleryView.frame.size.height = initialFrame.height - translation.y

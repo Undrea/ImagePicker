@@ -22,7 +22,7 @@ class CameraMan {
   var isCameraAuthorized: Bool {
     return AVCaptureDevice.authorizationStatus(for: AVMediaType.video) == .authorized
   }
-  
+
   deinit {
     stop()
   }
@@ -31,7 +31,7 @@ class CameraMan {
 
   func setup(startOnFrontCamera: Bool = false, shouldShowPermissionAlerts: Bool = true) {
     self.startOnFrontCamera = startOnFrontCamera
-    
+
     if shouldShowPermissionAlerts {
       checkPermission() // Will start the camera if authorized or notify the delegate if denied
     } else if isCameraAuthorized {
@@ -44,8 +44,8 @@ class CameraMan {
   func setupDevices() {
     // Input
     AVCaptureDevice
-    .devices().flatMap {
-      return $0 as? AVCaptureDevice
+    .devices().compactMap {
+      return $0 as AVCaptureDevice
     }.filter {
       return $0.hasMediaType(AVMediaType.video)
     }.forEach {
@@ -163,9 +163,9 @@ class CameraMan {
 
   func takePhoto(_ previewLayer: AVCaptureVideoPreviewLayer, location: CLLocation?, completion: (() -> Void)? = nil) {
     guard let connection = stillImageOutput?.connection(with: AVMediaType.video) else { return }
-    
+
     connection.videoOrientation = Helper.videoOrientation()
-    
+
     queue.async {
       self.stillImageOutput?.captureStillImageAsynchronously(from: connection) { buffer, error in
         guard let buffer = buffer, error == nil && CMSampleBufferIsValid(buffer) else {
@@ -174,29 +174,29 @@ class CameraMan {
           }
           return
         }
-        
+
         // If we have a location, append the metadata to the buffer 
         // This avoids making a copy of the buffer image and duplicating, as with using source/destination. (i.e. CGImageSourceCreateWithData)
         if let location = location {
-          var metaDict = CMCopyDictionaryOfAttachments(allocator: nil, target: buffer, attachmentMode: kCMAttachmentMode_ShouldPropagate) as? Dictionary<String, Any> ?? [:]
+          var metaDict = CMCopyDictionaryOfAttachments(allocator: nil, target: buffer, attachmentMode: kCMAttachmentMode_ShouldPropagate) as? [String: Any] ?? [:]
           metaDict[kCGImagePropertyGPSDictionary as String] = location.gpsMetadata()
-          
+
           CMSetAttachments(buffer, attachments: metaDict as CFDictionary, attachmentMode: kCMAttachmentMode_ShouldPropagate)
         }
-        
+
         guard let imageData = AVCaptureStillImageOutput.jpegStillImageNSDataRepresentation(buffer) else {
           DispatchQueue.main.async {
             completion?()
           }
           return
         }
-        
+
         // Now save this image to the Camera Roll
         self.savePhoto(withData: imageData, completion: completion)
       }
     }
   }
-  
+
   func savePhoto(withData data: Data, completion: (() -> Void)? = nil) {
     // Note that using the Photos API .location property on a request does NOT embed GPS metadata into the data for a file.
     PHPhotoLibrary.shared().performChanges({
@@ -210,7 +210,7 @@ class CameraMan {
         let tmpURL = URL(fileURLWithPath: NSTemporaryDirectory(), isDirectory: true).appendingPathComponent("tempPhoto").appendingPathExtension("jpg")
         do {
           try data.write(to: tmpURL)
-          
+
           let request = PHAssetChangeRequest.creationRequestForAssetFromImage(atFileURL: tmpURL)
           request?.creationDate = Date()
         } catch {

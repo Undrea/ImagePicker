@@ -1,7 +1,6 @@
 import UIKit
 
 class VideoInfoView: UIView {
-    
   private var duration: TimeInterval?
 
   private lazy var videoIcon: UIImageView = {
@@ -13,7 +12,7 @@ class VideoInfoView: UIView {
     videoIcon.contentMode = .scaleAspectFit
     return videoIcon
   }()
-    
+
   private lazy var videoInfoLabel: UILabel = {
     let videoInfoLabel = UILabel(frame: CGRect(x: 0,
                                                y: 0,
@@ -25,7 +24,7 @@ class VideoInfoView: UIView {
     videoInfoLabel.text = self.dateFormatter.string(from: self.duration ?? 0)
     return videoInfoLabel
   }()
-    
+
   private lazy var dateFormatter: DateComponentsFormatter = {
     let formatter = DateComponentsFormatter()
     formatter.zeroFormattingBehavior = .pad
@@ -46,7 +45,7 @@ class VideoInfoView: UIView {
   override init(frame: CGRect) {
     fatalError("init(frame:) has not been implemented")
   }
-    
+
   required init?(coder aDecoder: NSCoder) {
     fatalError("init(coder:) has not been implemented")
   }

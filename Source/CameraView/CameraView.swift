@@ -57,10 +57,11 @@ class CameraView: UIViewController, CLLocationManagerDelegate, CameraManDelegate
 
   lazy var noCameraButton: UIButton = { [unowned self] in
     let button = UIButton(type: .system)
-    let title = NSAttributedString(string: self.configuration.settingsTitle,
+    let title = NSAttributedString(
+      string: self.configuration.settingsTitle,
       attributes: [
-        NSAttributedString.Key.font : self.configuration.settingsFont,
-        NSAttributedString.Key.foregroundColor : self.configuration.settingsColor,
+        NSAttributedString.Key.font: self.configuration.settingsFont,
+        NSAttributedString.Key.foregroundColor: self.configuration.settingsColor
       ])
 
     button.setAttributedTitle(title, for: UIControl.State())
@@ -90,14 +91,13 @@ class CameraView: UIViewController, CLLocationManagerDelegate, CameraManDelegate
   var startOnFrontCamera: Bool = false
   var shouldShowPermissionAlerts: Bool = true
 
-
   public init(configuration: Configuration? = nil) {
     if let configuration = configuration {
       self.configuration = configuration
     }
     super.init(nibName: nil, bundle: nil)
   }
-  
+
   required init?(coder aDecoder: NSCoder) {
     fatalError("init(coder:) has not been implemented")
   }
@@ -181,7 +181,7 @@ class CameraView: UIViewController, CLLocationManagerDelegate, CameraManDelegate
   // MARK: - Camera actions
 
   func rotateCamera() {
-    UIView.animate(withDuration: 0.3, animations: { 
+    UIView.animate(withDuration: 0.3, animations: {
       self.containerView.alpha = 1
       }, completion: { _ in
         self.cameraMan.switchCamera {
@@ -201,7 +201,7 @@ class CameraView: UIViewController, CLLocationManagerDelegate, CameraManDelegate
     cameraMan.flash(mapping[title] ?? .auto)
   }
 
-  func takePicture(_ completion: @escaping () -> ()) {
+  func takePicture(_ completion: @escaping () -> Void) {
     guard let previewLayer = previewLayer else { return }
 
     UIView.animate(withDuration: 0.1, animations: {
@@ -232,12 +232,12 @@ class CameraView: UIViewController, CLLocationManagerDelegate, CameraManDelegate
 
   func focusTo(_ point: CGPoint) {
     let convertedPoint = CGPoint(x: point.x / UIScreen.main.bounds.width,
-                                 y:point.y / UIScreen.main.bounds.height)
+                                 y: point.y / UIScreen.main.bounds.height)
 
     cameraMan.focus(convertedPoint)
 
     focusImageView.center = point
-    UIView.animate(withDuration: 0.5, animations: { 
+    UIView.animate(withDuration: 0.5, animations: {
       self.focusImageView.alpha = 1
       self.focusImageView.transform = CGAffineTransform(scaleX: 0.6, y: 0.6)
       }, completion: { _ in
