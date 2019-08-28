@@ -78,7 +78,8 @@ open class ImageGalleryView: UIView {
     }()
 
   open lazy var selectedStack = ImageStack()
-  var fetchResultAssets: PHFetchResult<PHAsset>?
+
+  var photoAssets: PhotoAssets?
 
   weak var delegate: ImageGalleryPanGestureDelegate?
   var collectionSize: CGSize?
@@ -158,8 +159,8 @@ open class ImageGalleryView: UIView {
   // MARK: - Photos handler
 
   func fetchPhotos(_ completion: (() -> Void)? = nil) {
-    AssetManager.fetch(withConfiguration: configuration) { fetchResultAssets in
-      self.fetchResultAssets = fetchResultAssets
+    AssetManager.fetch(withConfiguration: configuration) { photoAssets in
+      self.photoAssets = photoAssets
       self.collectionView.reloadData()
 
       completion?()
@@ -208,7 +209,7 @@ extension ImageGalleryView: UICollectionViewDelegateFlowLayout {
 
 extension ImageGalleryView: UICollectionViewDelegate {
   public func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
-    guard let fetchResultAssets = fetchResultAssets,
+    guard let photoAssets = photoAssets,
       let cell = collectionView.cellForItem(at: indexPath) as? ImageGalleryViewCell else {
         return
     }
@@ -229,10 +230,7 @@ extension ImageGalleryView: UICollectionViewDelegate {
       }
     }
 
-    let indexOfLastItem = (fetchResultAssets.count - 1)
-    let reverseIndex = indexOfLastItem - indexPath.row
-
-    let asset = fetchResultAssets.object(at: reverseIndex)
+    let asset = photoAssets[indexPath.row]
 
     AssetManager.resolveAsset(asset, size: CGSize(width: 100, height: 100)) { image in
       guard image != nil else { return }
@@ -252,6 +250,19 @@ extension ImageGalleryView: UICollectionViewDelegate {
         })
         self.selectedStack.pushAsset(asset)
       }
+    }
+  }
+
+  public func collectionView(_ collectionView: UICollectionView, willDisplay cell: UICollectionViewCell, forItemAt indexPath: IndexPath) {
+    // Calculate if we need to fetch the "next page" of assets and update the collectionView
+    let loadNextPageThreshold = 10
+    if let photoAssets = photoAssets, indexPath.row > (photoAssets.count - loadNextPageThreshold),
+      let expandRange = self.photoAssets?.expandData() {
+
+      collectionView.performBatchUpdates({
+        let updateRange = expandRange.start..<(expandRange.start + expandRange.expandSize)
+        collectionView.insertItems(at: Array(updateRange).map {IndexPath(row: $0, section: 0)})
+      }, completion: nil)
     }
   }
 }

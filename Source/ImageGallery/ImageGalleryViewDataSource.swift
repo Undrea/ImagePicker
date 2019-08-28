@@ -7,26 +7,22 @@ extension ImageGalleryView: UICollectionViewDataSource {
   }
 
   public func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-    guard let fetchResultAssets = fetchResultAssets, fetchResultAssets.count > 0 else {
+    guard let photoAssets = photoAssets, photoAssets.count > 0 else {
       displayNoImagesMessage(true)
       return 0
     }
 
-    displayNoImagesMessage(fetchResultAssets.count == 0)
-    return fetchResultAssets.count
+    displayNoImagesMessage(photoAssets.count == 0)
+    return photoAssets.count
   }
 
   public func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
-    guard let fetchResultAssets = fetchResultAssets,
+    guard let photoAssets = photoAssets,
       let cell = collectionView.dequeueReusableCell(withReuseIdentifier: CollectionView.reusableIdentifier, for: indexPath) as? ImageGalleryViewCell else {
         return UICollectionViewCell()
     }
 
-    let indexOfLastItem = (fetchResultAssets.count - 1)
-    let reverseIndex = indexOfLastItem - indexPath.row
-    print(reverseIndex)
-
-    let asset = fetchResultAssets.object(at: reverseIndex)
+    let asset = photoAssets[indexPath.row]
 
     AssetManager.resolveAsset(asset, size: CGSize(width: 160, height: 240)) { image in
       if let image = image {

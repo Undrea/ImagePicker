@@ -15,17 +15,22 @@ open class AssetManager {
     return UIImage(named: name, in: bundle, compatibleWith: traitCollection) ?? UIImage()
   }
 
-  public static func fetch(withConfiguration configuration: Configuration, _ completion: @escaping (_ assets: PHFetchResult<PHAsset>) -> Void) {
+  public static func fetch(withConfiguration configuration: Configuration, _ completion: @escaping (_ assets: PhotoAssets) -> Void) {
     guard PHPhotoLibrary.authorizationStatus() == .authorized else { return }
 
     DispatchQueue.global(qos: .background).async {
+      // Get oldest first
+      let fetchOptions = PHFetchOptions()
+      fetchOptions.sortDescriptors = [NSSortDescriptor(key: "creationDate", ascending: false)]
+
       let fetchResult = configuration.allowVideoSelection
-        ? PHAsset.fetchAssets(with: PHFetchOptions())
-        : PHAsset.fetchAssets(with: .image, options: PHFetchOptions())
+        ? PHAsset.fetchAssets(with: fetchOptions)
+        : PHAsset.fetchAssets(with: .image, options: fetchOptions)
 
       if fetchResult.count > 0 {
         DispatchQueue.main.async {
-          completion(fetchResult)
+          NSLog("End fetch, \(fetchResult.count) results")
+          completion(PhotoAssets(withResults: fetchResult))
         }
       }
     }
