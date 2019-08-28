@@ -29,7 +29,7 @@ open class ImageGalleryView: UIView {
 
   lazy open var collectionView: UICollectionView = { [unowned self] in
     let collectionView = UICollectionView(frame: CGRect.zero,
-      collectionViewLayout: self.collectionViewLayout)
+                                          collectionViewLayout: self.collectionViewLayout)
     collectionView.translatesAutoresizingMaskIntoConstraints = false
     collectionView.backgroundColor = self.configuration.mainColor
     collectionView.showsHorizontalScrollIndicator = false
@@ -78,7 +78,7 @@ open class ImageGalleryView: UIView {
     }()
 
   open lazy var selectedStack = ImageStack()
-  lazy var assets = [PHAsset]()
+  var fetchResultAssets: PHFetchResult<PHAsset>?
 
   weak var delegate: ImageGalleryPanGestureDelegate?
   var collectionSize: CGSize?
@@ -134,7 +134,7 @@ open class ImageGalleryView: UIView {
     topSeparator.frame = CGRect(x: 0, y: 0, width: totalWidth, height: Dimensions.galleryBarHeight)
     topSeparator.autoresizingMask = [.flexibleLeftMargin, .flexibleRightMargin, .flexibleWidth]
     configuration.indicatorView.frame = CGRect(x: (totalWidth - configuration.indicatorWidth) / 2, y: (topSeparator.frame.height - configuration.indicatorHeight) / 2,
-      width: configuration.indicatorWidth, height: configuration.indicatorHeight)
+                                               width: configuration.indicatorWidth, height: configuration.indicatorHeight)
     collectionView.frame = CGRect(x: 0, y: topSeparator.frame.height, width: totalWidth, height: collectionFrame - topSeparator.frame.height)
     collectionSize = CGSize(width: collectionView.frame.height, height: collectionView.frame.height)
 
@@ -158,9 +158,8 @@ open class ImageGalleryView: UIView {
   // MARK: - Photos handler
 
   func fetchPhotos(_ completion: (() -> Void)? = nil) {
-    AssetManager.fetch(withConfiguration: configuration) { assets in
-      self.assets.removeAll()
-      self.assets.append(contentsOf: assets)
+    AssetManager.fetch(withConfiguration: configuration) { fetchResultAssets in
+      self.fetchResultAssets = fetchResultAssets
       self.collectionView.reloadData()
 
       completion?()
@@ -199,19 +198,21 @@ extension ImageGalleryView: UICollectionViewDelegateFlowLayout {
   public func collectionView(_ collectionView: UICollectionView,
                              layout collectionViewLayout: UICollectionViewLayout,
                              sizeForItemAt indexPath: IndexPath) -> CGSize {
-      guard let collectionSize = collectionSize else { return CGSize.zero }
+    guard let collectionSize = collectionSize else { return CGSize.zero }
 
-      return collectionSize
+    return collectionSize
   }
 }
 
 // MARK: CollectionView delegate methods
 
 extension ImageGalleryView: UICollectionViewDelegate {
-
   public func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
-    guard let cell = collectionView.cellForItem(at: indexPath)
-      as? ImageGalleryViewCell else { return }
+    guard let fetchResultAssets = fetchResultAssets,
+      let cell = collectionView.cellForItem(at: indexPath) as? ImageGalleryViewCell else {
+        return
+    }
+
     if configuration.allowMultiplePhotoSelection == false {
       // Clear selected photos array
       for asset in self.selectedStack.assets {
@@ -220,15 +221,18 @@ extension ImageGalleryView: UICollectionViewDelegate {
       // Animate deselecting photos for any selected visible cells
       guard let visibleCells = collectionView.visibleCells as? [ImageGalleryViewCell] else { return }
       for cell in visibleCells where cell.selectedImageView.image != nil {
-          UIView.animate(withDuration: 0.2, animations: {
-            cell.selectedImageView.transform = CGAffineTransform(scaleX: 0.1, y: 0.1)
-          }, completion: { _ in
-            cell.selectedImageView.image = nil
-          })
-        }
+        UIView.animate(withDuration: 0.2, animations: {
+          cell.selectedImageView.transform = CGAffineTransform(scaleX: 0.1, y: 0.1)
+        }, completion: { _ in
+          cell.selectedImageView.image = nil
+        })
+      }
     }
 
-    let asset = assets[(indexPath as NSIndexPath).row]
+    let indexOfLastItem = (fetchResultAssets.count - 1)
+    let reverseIndex = indexOfLastItem - indexPath.row
+
+    let asset = fetchResultAssets.object(at: reverseIndex)
 
     AssetManager.resolveAsset(asset, size: CGSize(width: 100, height: 100)) { image in
       guard image != nil else { return }
@@ -236,8 +240,8 @@ extension ImageGalleryView: UICollectionViewDelegate {
       if cell.selectedImageView.image != nil {
         UIView.animate(withDuration: 0.2, animations: {
           cell.selectedImageView.transform = CGAffineTransform(scaleX: 0.1, y: 0.1)
-          }, completion: { _ in
-            cell.selectedImageView.image = nil
+        }, completion: { _ in
+          cell.selectedImageView.image = nil
         })
         self.selectedStack.dropAsset(asset)
       } else if self.imageLimit == 0 || self.imageLimit > self.selectedStack.assets.count {

@@ -394,11 +394,15 @@ extension ImagePickerController: CameraViewDelegate {
     guard let collectionSize = galleryView.collectionSize else { return }
 
     galleryView.fetchPhotos {
-      guard let asset = self.galleryView.assets.first else { return }
+      // Get most recent asset and push to multi-selection stack if allowMultiplePhotoSelection,
+      // or replace any existing selection
+      guard let mostRecentAsst = self.galleryView.fetchResultAssets?.lastObject else { return }
+
       if self.configuration.allowMultiplePhotoSelection == false {
         self.stack.assets.removeAll()
       }
-      self.stack.pushAsset(asset)
+
+      self.stack.pushAsset(mostRecentAsst)
     }
 
     galleryView.shouldTransform = true

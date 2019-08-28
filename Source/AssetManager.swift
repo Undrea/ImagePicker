@@ -15,7 +15,7 @@ open class AssetManager {
     return UIImage(named: name, in: bundle, compatibleWith: traitCollection) ?? UIImage()
   }
 
-  public static func fetch(withConfiguration configuration: Configuration, _ completion: @escaping (_ assets: [PHAsset]) -> Void) {
+  public static func fetch(withConfiguration configuration: Configuration, _ completion: @escaping (_ assets: PHFetchResult<PHAsset>) -> Void) {
     guard PHPhotoLibrary.authorizationStatus() == .authorized else { return }
 
     DispatchQueue.global(qos: .background).async {
@@ -24,13 +24,8 @@ open class AssetManager {
         : PHAsset.fetchAssets(with: .image, options: PHFetchOptions())
 
       if fetchResult.count > 0 {
-        var assets = [PHAsset]()
-        fetchResult.enumerateObjects({ object, index, stop in
-          assets.insert(object, at: 0)
-        })
-
         DispatchQueue.main.async {
-          completion(assets)
+          completion(fetchResult)
         }
       }
     }
