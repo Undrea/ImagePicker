@@ -18,7 +18,7 @@ open class AssetManager {
   public static func fetch(withConfiguration configuration: Configuration, _ completion: @escaping (_ assets: PhotoAssets) -> Void) {
     guard PHPhotoLibrary.authorizationStatus() == .authorized else { return }
 
-    DispatchQueue.global(qos: .background).async {
+    DispatchQueue.global(qos: .userInitiated).async {
       // Get oldest first
       let fetchOptions = PHFetchOptions()
       fetchOptions.sortDescriptors = [NSSortDescriptor(key: "creationDate", ascending: false)]
