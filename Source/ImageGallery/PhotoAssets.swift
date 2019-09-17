@@ -49,4 +49,8 @@ public struct PhotoAssets {
   var last: PHAsset? {
     return totalFetchResultAssets.object(at: count - 1)
   }
+  
+  var first: PHAsset? {
+    return totalFetchResultAssets.object(at: 0)
+  }
 }
