@@ -92,6 +92,8 @@ open class BottomContainerView: UIView {
   // MARK: - Action methods
 
   @objc func doneButtonDidPress(_ button: UIButton) {
+    button.isEnabled = false
+    
     if button.currentTitle == configuration.cancelButtonTitle {
       delegate?.cancelButtonDidPress()
     } else {
