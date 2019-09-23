@@ -41,7 +41,8 @@ open class AssetManager {
     let requestOptions = PHImageRequestOptions()
     requestOptions.deliveryMode = .highQualityFormat
     requestOptions.isNetworkAccessAllowed = true
-
+    requestOptions.isSynchronous = false
+    
     imageManager.requestImage(for: asset, targetSize: size, contentMode: .aspectFill, options: requestOptions) { image, info in
       if let info = info, info["PHImageFileUTIKey"] == nil {
         DispatchQueue.main.async(execute: {
@@ -54,7 +55,10 @@ open class AssetManager {
   public static func resolveAssets(_ assets: [PHAsset], size: CGSize = CGSize(width: 720, height: 1280), completion: @escaping ([Data]) -> Void) {
     let imageManager = PHImageManager.default()
     let requestOptions = PHImageRequestOptions()
-
+    requestOptions.deliveryMode = .highQualityFormat
+    requestOptions.isNetworkAccessAllowed = true
+    requestOptions.isSynchronous = false
+    
     let group = DispatchGroup()
     var imageDataArr: [Data] = []
 
